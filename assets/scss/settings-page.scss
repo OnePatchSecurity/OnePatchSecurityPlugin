@@ -1,0 +1,90 @@
+.security-settings-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  .security-setting-item {
+    margin: 0 0 15px 0;
+    padding: 15px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    background-color: #fff;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+
+    label {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      color: #1d2327;
+      cursor: pointer;
+
+      input[type="checkbox"] {
+        margin-right: 10px;
+        cursor: pointer;
+      }
+    }
+
+    &:hover {
+      border-color: #007cba;
+    }
+  }
+}
+
+/* Style for the tooltip container */
+.tooltip {
+  display: inline-block;
+  margin-left: 5px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  text-align: center;
+  background-color: #2271b1;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 12px;
+  cursor: pointer;
+  position: relative;
+  border: none;
+  padding: 0;
+
+  &:hover {
+    background-color: #135e96;
+  }
+
+  /* Tooltip Content */
+  .tooltip-content {
+    text-align: left;
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 250px;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+    font-size: 13px;
+    color: #1d2327;
+    z-index: 10000;
+
+    a.tooltip-cta {
+      display: inline;
+      margin-top: 8px;
+      color: #2271b1;
+      text-decoration: none;
+
+      &:hover {
+        color: #135e96;
+        text-decoration: underline;
+      }
+    }
+  }
+
+  /* Show Tooltip on Hover/Focus */
+  &:hover .tooltip-content,
+  &:focus .tooltip-content {
+    display: block;
+  }
+}

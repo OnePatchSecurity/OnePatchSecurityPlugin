@@ -1,0 +1,20 @@
+{
+  "name": "1patch/1-patch-security",
+  "description": "A lightweight solution for common WordPress security vulnerabilities.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "authors": [
+    {
+      "name": "1 Patch Security",
+      "email": "support@1patchsecurity.com"
+    }
+  ],
+  "require": {
+    "php": ">=8.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "OnePatch\\": "src/"
+    }
+  }
+}
