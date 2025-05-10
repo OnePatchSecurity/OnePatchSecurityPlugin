@@ -63,7 +63,7 @@ class OnePatch {
 		add_filter( 'rest_endpoints', array( $this, 'block_specific_endpoints' ) ); // tested and implemented in the settings page.
 
 		// Limit login attempts TODO this still doesn't work, but is less broken. Fix.
-		add_filter( 'authenticate', array( $this, 'handle_login_attempts_and_lockout' ), 30, 3 ); // tested and implemented in the settings page -- BEFORE CODE REVIEW.
+		add_filter( 'authenticate', array( $this, 'handle_login_attempts_and_lockout' ), 30, 3 );
 		add_action( 'login_enqueue_scripts', array( $this, 'hide_login_box_if_locked_out' ) );
 	}
 
@@ -82,141 +82,152 @@ class OnePatch {
 	 * @since 1.0.0
 	 */
 	public function handle_login_attempts_and_lockout( WP_User|WP_Error|null $user, string|null $username, string|null $password ): WP_User|WP_Error|null {
-		if ( empty( $this->settings['limit_login_attempts'] ) ) {
+		if ( empty( $this->settings['limit_login_attempts'] ) || empty( $username ) ) {
 			return $user;
 		}
 
-		if ( empty( $username ) ) {
-			return $user;
-		}
+		$max_attempts        = 3;
+		$lockout_duration    = 30 * MINUTE_IN_SECONDS;
+		$attempts_expiration = 60 * MINUTE_IN_SECONDS;
+		$transient_prefix    = 'login_attempts_';
+		$lockout_key         = 'lockout_' . $username;
+		$lockout_cookie      = 'login_lockout_' . $username;
 
-		$max_attempts     = 3;
-		$lockout_duration = 30;
-		$transient_prefix = 'login_attempts_';
-
-		// Check if the user is already locked out.
-		$lockout_time = get_transient( 'lockout_' . $username );
-
-		if ( $lockout_time ) {
-			// Set a cookie to indicate the user is locked out.
-			setcookie( 'login_lockout_' . $username, '1', time() + $lockout_duration * MINUTE_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN );
-
+		// Type-safe lockout check.
+		$lockout_expires = $this->get_safe_transient( $lockout_key );
+		if ( $lockout_expires && time() < $lockout_expires ) {
+			$this->set_secure_cookie( $lockout_cookie, '1', $lockout_expires );
 			return new WP_Error(
 				'too_many_attempts',
 				sprintf(
-				/* translators: %d: Number of minutes until login retry is allowed */
 					__( 'Too many failed login attempts. Please try again in %d minutes.', 'your-text-domain' ),
-					ceil( ( $lockout_time + $lockout_duration * MINUTE_IN_SECONDS - time() ) / 60 )
+					ceil( ( $lockout_expires - time() ) / 60 )
 				)
 			);
 		}
 
-		// Track login attempts.
-		$attempts = get_transient( $transient_prefix . $username ) ? get_transient( $transient_prefix . $username ) : 0;
+		// Successful login - reset attempts if not locked out.
+		if ( ! is_wp_error( $user ) ) {
+			delete_transient( $transient_prefix . $username );
+			$this->clear_cookie( $lockout_cookie );
+			return $user;
+		}
 
-		// If max attempts reached, set lockout.
+		// Process failed attempt.
+		$attempts = absint( get_transient( $transient_prefix . $username ) ) + 1;
+		set_transient( $transient_prefix . $username, $attempts, $attempts_expiration );
+
 		if ( $attempts >= $max_attempts ) {
-			set_transient( 'lockout_' . $username, time(), $lockout_duration * MINUTE_IN_SECONDS );
-			setcookie( 'login_lockout_' . $username, '1', time() + $lockout_duration * MINUTE_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN );
+			$new_lockout_expires = time() + $lockout_duration;
+			set_transient( $lockout_key, $new_lockout_expires, $lockout_duration );
+			$this->set_secure_cookie( $lockout_cookie, '1', $new_lockout_expires );
 
 			return new WP_Error(
 				'too_many_attempts',
 				sprintf(
-					/* translators: %d: Number of minutes until login retry is allowed */
 					__( 'Too many failed login attempts. Please try again in %d minutes.', 'your-text-domain' ),
-					$lockout_duration
+					ceil( $lockout_duration / 60 )
 				)
 			);
 		}
-
-		// If credentials are invalid, increment the attempt counter.
-		if ( is_wp_error( $user ) ) {
-			$attempts++;
-			set_transient( $transient_prefix . $username, $attempts, 10 * MINUTE_IN_SECONDS );
-
-			// If this was the final attempt, set the lockout.
-			if ( $attempts >= $max_attempts ) {
-				set_transient( 'lockout_' . $username, time(), $lockout_duration * MINUTE_IN_SECONDS );
-				setcookie( 'login_lockout_' . $username, '1', time() + $lockout_duration * MINUTE_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN );
-
-				return new WP_Error(
-					'too_many_attempts',
-					sprintf(
-						/* translators: %d: Number of minutes until login retry is allowed */
-						__( 'Too many failed login attempts. Please try again in %d minutes.', 'your-text-domain' ),
-						$lockout_duration
-					)
-				);
-			}
-
-			// Otherwise, return the invalid credential error.
-			return new WP_Error(
-				'invalid_credentials',
-				__( 'Invalid login credentials. Please try again.', 'your-text-domain' )
-			);
-		}
-
-		// If credentials are valid, reset the attempt counter.
-		delete_transient( $transient_prefix . $username );
-		setcookie( 'login_lockout_' . $username, '', time() - 3600, COOKIEPATH, COOKIE_DOMAIN );
 
 		return $user;
 	}
 
 	/**
+	 * Get safe transient.
+	 *
+	 * @param string $key
+	 * @return int
+	 */
+	private function get_safe_transient( string $key ): int {
+		$value = get_transient( $key );
+		return is_numeric( $value ) ? (int) $value : 0;
+	}
+
+	/**
 	 * Adds JavaScript to hide the login box if the user is locked out.
 	 *
+	 * @param string $name
+	 * @param string $value
+	 * @param int    $expires
 	 * @return void
-	 *
 	 *
 	 * @since 1.0.0
 	 */
+	private function set_secure_cookie( string $name, string $value, int $expires ): void {
+		setcookie(
+			$name,
+			$value,
+			array(
+				'expires'  => $expires,
+				'path'     => COOKIEPATH,
+				'domain'   => COOKIE_DOMAIN,
+				'secure'   => is_ssl(),
+				'httponly' => true,
+				'samesite' => 'Lax',
+			)
+		);
+	}
+
+	/**
+	 * Helper function to clear the cookie.
+	 *
+	 * @param string $name
+	 * @return void
+	 */
+	private function clear_cookie( string $name ): void {
+		$this->set_secure_cookie( $name, '', time() - YEAR_IN_SECONDS );
+	}
+
+	/**
+	 * Adds JavaScript to hide the login box if the user is locked out.
+	 */
 	public function hide_login_box_if_locked_out(): void {
-		/*if ( empty( $this->settings['limit_login_attempts'] ) ) {
+		if ( empty( $this->settings['limit_login_attempts'] ) ) {
 			return;
-		}*/
-
-		// verify nonce.
-		/*if ( ! isset( $_POST['security_settings_nonce'] ) ||
-			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['security_settings_nonce'] ) ), 'security_settings_nonce' ) ) {
-			wp_die( esc_html__( 'Security check failed', 'your-text-domain' ) );
-		}*/
-
-		// Check if the user is locked out via the cookie.
-		$username = '';
-		if ( isset( $_POST['log'] ) ) {
-			$username = sanitize_user( wp_unslash( $_POST['log'] ) );
 		}
-		$lockout_cookie = $username ? isset( $_COOKIE[ 'login_lockout_' . $username ] ) : false;
 
-		if ( $lockout_cookie ) {
-			echo '<style>#loginform { display: none; }</style>';
+		if ( ! isset( $_POST['log'] ) ) {
+			return;
+		}
 
-			$error_message = sprintf(
-				/* translators: %d: Number of minutes until login retry is allowed */
-				__( 'Too many failed login attempts. Please try again in %d minutes.', 'your-text-domain' ),
-				30
-			);
-			wp_enqueue_script( 'jquery' );
-			wp_add_inline_script(
-				'jquery',
-				sprintf(
-					'jQuery(function($) {
-                            $("body").on("login_message", function(ev, loginMessage) {
-                            if ($("#login-message").length) {
-                            $("#login-message").html(%s);
-                        }
-                      });
-                     });',
-					wp_json_encode(
-						sprintf(
-							'<p class="message error">%s</p>',
-							esc_html( $error_message )
-						)
+		$username        = sanitize_user( wp_unslash( $_POST['log'] ) );
+		$lockout_key     = 'lockout_' . $username;
+		$lockout_expires = get_transient( $lockout_key );
+
+		if ( ! $lockout_expires ) {
+			return;
+		}
+
+		$minutes_remaining = max( 1, ceil( ( $lockout_expires - time() ) / 60 ) );
+
+		// Hide all default WordPress login UI.
+		echo '<style>
+        #loginform,
+        .login .message,
+        .login #login_error {
+            display: none !important;
+        }
+    </style>';
+
+		// Inject our single error message.
+		wp_enqueue_script( 'jquery' );
+		wp_add_inline_script(
+			'jquery',
+			sprintf(
+				'jQuery(function($) {
+            $("#login").prepend(\'<div class="login_error">%s</div>\');
+        });',
+				esc_js(
+					sprintf(
+						// Translators: %d is the number of minutes the user must wait before trying to log in again.
+						__( 'Too many failed login attempts. Please try again in %d minutes.', 'your-text-domain' ),
+						$minutes_remaining
 					)
 				)
-			);
-		}
+			)
+		);
 	}
 
 
@@ -250,10 +261,13 @@ class OnePatch {
 
 		add_filter( 'xmlrpc_enabled', '__return_false' );
 
-		add_action( 'xmlrpc_enabled', function() {
-			status_header( 403 );
-			wp_die(  'XML_RPC services are disabled on this application.', 'Forbidden', array( 'response' => 403 ) );
-		});
+		add_action(
+			'xmlrpc_enabled',
+			function() {
+				status_header( 403 );
+				wp_die( 'XML_RPC services are disabled on this application.', 'Forbidden', array( 'response' => 403 ) );
+			}
+		);
 	}
 
 	/**
