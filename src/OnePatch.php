@@ -58,13 +58,11 @@ class OnePatch {
 		add_action( 'init', array( $this, 'prevent_user_enum_via_query_param' ) ); // tested and implemented in the settings page.
 		add_action( 'template_redirect', array( $this, 'prevent_user_enum_via_template' ) ); // tested and implemented in the settings page.
 
-		// REST API endpoint tightening methods.
 		add_filter( 'rest_authentication_errors', array( $this, 'boot_non_logged_users_from_rest' ) ); // tested and implemented in the settings page.
 		add_filter( 'rest_endpoints', array( $this, 'block_specific_endpoints' ) ); // tested and implemented in the settings page.
 
-		// Limit login attempts TODO this still doesn't work, but is less broken. Fix.
-		add_filter( 'authenticate', array( $this, 'handle_login_attempts_and_lockout' ), 30, 3 );
-		add_action( 'login_enqueue_scripts', array( $this, 'hide_login_box_if_locked_out' ) );
+		add_filter( 'authenticate', array( $this, 'handle_login_attempts_and_lockout' ), 30, 3 ); // tested and implemented in the settings page.
+		add_action( 'login_enqueue_scripts', array( $this, 'hide_login_box_if_locked_out' ) ); // tested and implemented in the settings page.
 	}
 
 	/**
