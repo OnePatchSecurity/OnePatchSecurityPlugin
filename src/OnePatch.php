@@ -66,6 +66,158 @@ class OnePatch {
 	}
 
 	/**
+	 * Remove WordPress version from the metadata.
+	 *
+	 * @return void
+	 *
+	 * @since 1.0.0
+	 */
+	public function remove_wp_version_meta(): void {
+		if ( empty( $this->settings['remove_wp_version_meta'] ) ) {
+			return;
+		}
+
+		remove_action( 'wp_head', 'wp_generator' );
+	}
+
+	/**
+	 * Disable XML-RPC in WordPress.
+	 *
+	 * Throwing a 403 on xmlrpc_methods is a bit aggressive, but it sends a message.
+	 *
+	 * @return void
+	 * @since 1.0.0
+	 */
+	public function disable_xmlrpc(): void {
+		if ( empty( $this->settings['disable_xmlrpc'] ) ) {
+			return;
+		}
+
+		add_filter( 'xmlrpc_enabled', '__return_false' );
+
+		add_action(
+			'xmlrpc_enabled',
+			function() {
+				status_header( 403 );
+				wp_die( 'XML_RPC services are disabled on this application.', 'Forbidden', array( 'response' => 403 ) );
+			}
+		);
+	}
+
+	/**
+	 * Customizes the login error message to prevent user information leaks.
+	 *
+	 * @param WP_Error $errors The existing WP_Error object containing login error messages.
+	 *
+	 * @return WP_Error The modified WP_Error object with custom error messages.
+	 *
+	 * @since 1.0.0
+	 */
+	public function custom_login_error_message( WP_Error $errors ): WP_Error {
+		if ( empty( $this->settings['custom_login_error_message'] ) ) {
+			return $errors;
+		}
+
+		foreach ( $errors->errors as $code => $messages ) {
+			$errors->errors[ $code ] = array( __( 'Invalid login credentials. Please try again.', 'textdomain' ) );
+		}
+
+		return $errors;
+	}
+
+	/**
+	 * Prevents user enumeration via the 'author' query parameter.
+	 *
+	 * If the 'author' query parameter is set in the URL, this function redirects
+	 * the user to the homepage to prevent potential information disclosure
+	 * regarding author accounts.
+	 *
+	 * @return void
+	 *
+	 * @since 1.0.0
+	 */
+	public function prevent_user_enum_via_query_param(): void {
+		if ( empty( $this->settings['prevent_user_enum_via_query_param'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['author'] ) ) {
+			wp_safe_redirect( home_url() );
+			exit;
+		}
+	}
+
+	/**
+	 * Prevents user enumeration by redirecting author archive pages.
+	 *
+	 * If the current request is for an author archive page, this method
+	 * redirects the user to the homepage to prevent potential information
+	 * disclosure regarding author accounts.
+	 *
+	 * @return void
+	 *
+	 * @since 1.0.0
+	 */
+	public function prevent_user_enum_via_template(): void {
+		if ( empty( $this->settings['prevent_user_enum_via_template'] ) ) {
+			return;
+		}
+
+		if ( is_author() ) {
+			wp_safe_redirect( home_url(), 301 );
+			exit;
+		}
+	}
+
+	/**
+	 * Disable access to the REST API to non-logged in users.
+	 *
+	 * Throw error message to non-logged in users who try to hit the REST API
+	 *
+	 * @param mixed $result The result of the previous callback or action that this filter applies to.
+	 *
+	 * @return mixed|WP_Error Returns a WP_Error if the user is not logged in, otherwise returns the original result.
+	 *
+	 * @since 1.0.0
+	 */
+	public function boot_non_logged_users_from_rest( mixed $result ): mixed {
+		if ( empty( $this->settings['boot_non_logged_users_from_rest'] ) ) {
+			return $result;
+		}
+
+		if ( ! is_user_logged_in() && ! is_admin() ) {
+			return new WP_Error( 'rest_not_logged_in', 'No Cookies, no entry. Authenticate first.', array( 'status' => 401 ) );
+		}
+		return $result;
+	}
+
+	/**
+	 * Remove user and plugin endpoints from REST API.
+	 *
+	 * REST endpoints are already blocked from non-logged in users. See boot_non_logged_users() above.
+	 * This explicitly unsets the plugin and user endpoints altogether, which I don't use and have security implications.
+	 *
+	 * @param array $endpoints REST endpoints to be filtered.
+	 * @return array
+	 *
+	 * @since 1.0.0
+	 */
+	public function block_specific_endpoints( array $endpoints ): array {
+		if ( empty( $this->settings['block_specific_endpoints'] ) ) {
+			return $endpoints;
+		}
+
+		if ( isset( $endpoints['/wp/v2/users'] ) ) {
+			unset( $endpoints['/wp/v2/users'] );
+		}
+		if ( isset( $endpoints['/wp/v2/plugins'] ) ) {
+			unset( $endpoints['/wp/v2/plugins'] );
+		}
+		return $endpoints;
+	}
+
+	/**
 	 * Tracks failed login attempts.
 	 * Sets one transient - login_attempts_<username> - for the number of failed attempts made.
 	 * Sets an additional transient - lockout_<username> - with a 30m expiration.
@@ -219,165 +371,12 @@ class OnePatch {
         });',
 				esc_js(
 					sprintf(
-						// Translators: %d is the number of minutes the user must wait before trying to log in again.
+					// Translators: %d is the number of minutes the user must wait before trying to log in again.
 						__( 'Too many failed login attempts. Please try again in %d minutes.', 'your-text-domain' ),
 						$minutes_remaining
 					)
 				)
 			)
 		);
-	}
-
-
-	/**
-	 * Remove WordPress version from the metadata.
-	 *
-	 * @return void
-	 *
-	 * @since 1.0.0
-	 */
-	public function remove_wp_version_meta(): void {
-		if ( empty( $this->settings['remove_wp_version_meta'] ) ) {
-			return;
-		}
-
-		remove_action( 'wp_head', 'wp_generator' );
-	}
-
-	/**
-	 * Disable XML-RPC in WordPress.
-	 *
-	 * Throwing a 403 on xmlrpc_methods is a bit aggressive, but it sends a message.
-	 *
-	 * @return void
-	 * @since 1.0.0
-	 */
-	public function disable_xmlrpc(): void {
-		if ( empty( $this->settings['disable_xmlrpc'] ) ) {
-			return;
-		}
-
-		add_filter( 'xmlrpc_enabled', '__return_false' );
-
-		add_action(
-			'xmlrpc_enabled',
-			function() {
-				status_header( 403 );
-				wp_die( 'XML_RPC services are disabled on this application.', 'Forbidden', array( 'response' => 403 ) );
-			}
-		);
-	}
-
-	/**
-	 * Customizes the login error message to prevent user information leaks.
-	 *
-	 * @param WP_Error $errors The existing WP_Error object containing login error messages.
-	 *
-	 * @return WP_Error The modified WP_Error object with custom error messages.
-	 *
-	 * @since 1.0.0
-	 */
-	public function custom_login_error_message( WP_Error $errors ): WP_Error {
-		if ( empty( $this->settings['custom_login_error_message'] ) ) {
-			return $errors;
-		}
-
-		foreach ( $errors->errors as $code => $messages ) {
-			$errors->errors[ $code ] = array( __( 'Invalid login credentials. Please try again.', 'textdomain' ) );
-		}
-
-		return $errors;
-	}
-
-	/**
-	 * Prevents user enumeration via the 'author' query parameter.
-	 *
-	 * If the 'author' query parameter is set in the URL, this function redirects
-	 * the user to the homepage to prevent potential information disclosure
-	 * regarding author accounts.
-	 *
-	 * @return void
-	 *
-	 * @since 1.0.0
-	 */
-	public function prevent_user_enum_via_query_param(): void {
-		if ( empty( $this->settings['prevent_user_enum_via_query_param'] ) ) {
-			return;
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_GET['author'] ) ) {
-			wp_safe_redirect( home_url() );
-			exit;
-		}
-	}
-
-	/**
-	 * Prevents user enumeration by redirecting author archive pages.
-	 *
-	 * If the current request is for an author archive page, this method
-	 * redirects the user to the homepage to prevent potential information
-	 * disclosure regarding author accounts.
-	 *
-	 * @return void
-	 *
-	 * @since 1.0.0
-	 */
-	public function prevent_user_enum_via_template(): void {
-		if ( empty( $this->settings['prevent_user_enum_via_template'] ) ) {
-			return;
-		}
-
-		if ( is_author() ) {
-			wp_safe_redirect( home_url(), 301 );
-			exit;
-		}
-	}
-
-	/**
-	 * Disable access to the REST API to non-logged in users.
-	 *
-	 * Throw error message to non-logged in users who try to hit the REST API
-	 *
-	 * @param mixed $result The result of the previous callback or action that this filter applies to.
-	 *
-	 * @return mixed|WP_Error Returns a WP_Error if the user is not logged in, otherwise returns the original result.
-	 *
-	 * @since 1.0.0
-	 */
-	public function boot_non_logged_users_from_rest( mixed $result ): mixed {
-		if ( empty( $this->settings['boot_non_logged_users_from_rest'] ) ) {
-			return $result;
-		}
-
-		if ( ! is_user_logged_in() && ! is_admin() ) {
-			return new WP_Error( 'rest_not_logged_in', 'No Cookies, no entry. Authenticate first.', array( 'status' => 401 ) );
-		}
-		return $result;
-	}
-
-	/**
-	 * Remove user and plugin endpoints from REST API.
-	 *
-	 * REST endpoints are already blocked from non-logged in users. See boot_non_logged_users() above.
-	 * This explicitly unsets the plugin and user endpoints altogether, which I don't use and have security implications.
-	 *
-	 * @param array $endpoints REST endpoints to be filtered.
-	 * @return array
-	 *
-	 * @since 1.0.0
-	 */
-	public function block_specific_endpoints( array $endpoints ): array {
-		if ( empty( $this->settings['block_specific_endpoints'] ) ) {
-			return $endpoints;
-		}
-
-		if ( isset( $endpoints['/wp/v2/users'] ) ) {
-			unset( $endpoints['/wp/v2/users'] );
-		}
-		if ( isset( $endpoints['/wp/v2/plugins'] ) ) {
-			unset( $endpoints['/wp/v2/plugins'] );
-		}
-		return $endpoints;
 	}
 }
