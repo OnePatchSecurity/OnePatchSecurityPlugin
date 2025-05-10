@@ -51,17 +51,16 @@ class OnePatch {
 	 */
 	public function __construct() {
 		$this->settings = get_option( 'security_settings', array() );
+		add_action( 'init', array( $this, 'remove_wp_version_meta' ) ); // tested and implemented in the settings page.
+		add_filter( 'init', array( $this, 'disable_xmlrpc' ), PHP_INT_MAX ); // tested and implemented in the settings page.
+		add_filter( 'wp_login_errors', array( $this, 'custom_login_error_message' ) ); // tested and implemented in the settings page.
 
-		add_action( 'init', array( $this, 'remove_wp_version_meta' ) ); // tested and implemented in the settings page -- BEFORE CODE REVIEW.
-		add_filter( 'init', array( $this, 'disable_xmlrpc' ), PHP_INT_MAX ); // tested and implemented in the settings page -- BEFORE CODE REVIEW.
-		add_filter( 'wp_login_errors', array( $this, 'custom_login_error_message' ) ); // tested and implemented in the settings page -- BEFORE CODE REVIEW.
-
-		add_action( 'init', array( $this, 'prevent_user_enum_via_query_param' ) ); // tested and implemented in the settings page -- BEFORE CODE REVIEW.
-		add_action( 'template_redirect', array( $this, 'prevent_user_enum_via_template' ) ); // tested and implemented in the settings page -- BEFORE CODE REVIEW.
+		add_action( 'init', array( $this, 'prevent_user_enum_via_query_param' ) ); // tested and implemented in the settings page.
+		add_action( 'template_redirect', array( $this, 'prevent_user_enum_via_template' ) ); // tested and implemented in the settings page.
 
 		// REST API endpoint tightening methods.
-		add_filter( 'rest_authentication_errors', array( $this, 'boot_non_logged_users_from_rest' ) ); // tested and implemented in the settings page -- BEFORE CODE REVIEW.
-		add_filter( 'rest_endpoints', array( $this, 'block_specific_endpoints' ) ); // tested and implemented in the settings page -- BEFORE CODE REVIEW.
+		add_filter( 'rest_authentication_errors', array( $this, 'boot_non_logged_users_from_rest' ) ); // tested and implemented in the settings page.
+		add_filter( 'rest_endpoints', array( $this, 'block_specific_endpoints' ) ); // tested and implemented in the settings page.
 
 		// Limit login attempts TODO this still doesn't work, but is less broken. Fix.
 		add_filter( 'authenticate', array( $this, 'handle_login_attempts_and_lockout' ), 30, 3 ); // tested and implemented in the settings page -- BEFORE CODE REVIEW.
@@ -169,18 +168,19 @@ class OnePatch {
 	 *
 	 * @return void
 	 *
+	 *
 	 * @since 1.0.0
 	 */
 	public function hide_login_box_if_locked_out(): void {
-		if ( empty( $this->settings['limit_login_attempts'] ) ) {
+		/*if ( empty( $this->settings['limit_login_attempts'] ) ) {
 			return;
-		}
+		}*/
 
 		// verify nonce.
-		if ( ! isset( $_POST['security_settings_nonce'] ) ||
+		/*if ( ! isset( $_POST['security_settings_nonce'] ) ||
 			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['security_settings_nonce'] ) ), 'security_settings_nonce' ) ) {
 			wp_die( esc_html__( 'Security check failed', 'your-text-domain' ) );
-		}
+		}*/
 
 		// Check if the user is locked out via the cookie.
 		$username = '';
@@ -238,7 +238,7 @@ class OnePatch {
 	/**
 	 * Disable XML-RPC in WordPress.
 	 *
-	 * Exiting on xmlrpc_methods is a bit aggressive, but it's the best way to get a totally empty response
+	 * Throwing a 403 on xmlrpc_methods is a bit aggressive, but it sends a message.
 	 *
 	 * @return void
 	 * @since 1.0.0
@@ -250,12 +250,10 @@ class OnePatch {
 
 		add_filter( 'xmlrpc_enabled', '__return_false' );
 
-		add_filter(
-			'xmlrpc_methods',
-			function () {
-				exit;
-			}
-		);
+		add_action( 'xmlrpc_enabled', function() {
+			status_header( 403 );
+			wp_die(  'XML_RPC services are disabled on this application.', 'Forbidden', array( 'response' => 403 ) );
+		});
 	}
 
 	/**
