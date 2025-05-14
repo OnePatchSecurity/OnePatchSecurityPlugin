@@ -166,10 +166,9 @@ class SecuritySettingsPage {
 						<label>
 							<input type="checkbox" name="security_settings-remove_wp_version_meta" value="1" <?php checked( $settings['remove_wp_version_meta'] ?? 0, 1 ); ?> />
 							<span>Remove WordPress version metadata</span>
-							<button class="tooltip" aria-describedby="tooltip-1" data-cta-link="https://yourwebsite.com/remove-wp-version">?
+							<button class="tooltip" aria-describedby="tooltip-1">?
 								<span class="tooltip-content" id="tooltip-1">
-								Hides the WordPress version number from your site's metadata. This prevents attackers from targeting known vulnerabilities in specific versions of WordPress. <br/><br/>
-								<a href="https://yourwebsite.com/remove-wp-version" class="tooltip-cta" target="_blank">Learn more</a> about securing your WordPress version on our website.
+								Hides the WordPress version number from your site's metadata. This prevents attackers from targeting known vulnerabilities in specific versions of WordPress. <br/>
 								</span>
 							</button>
 						</label>
@@ -179,10 +178,9 @@ class SecuritySettingsPage {
 						<label>
 							<input type="checkbox" name="security_settings-disable_xmlrpc" value="1" <?php checked( $settings['disable_xmlrpc'] ?? 0, 1 ); ?> />
 							<span>Disable XML-RPC Methods</span>
-							<button class="tooltip" aria-describedby="tooltip-2" data-cta-link="https://yourwebsite.com/disable-xml-rpc">?
+							<button class="tooltip" aria-describedby="tooltip-2">?
 								<span class="tooltip-content" id="tooltip-2">
-								Disables XML-RPC, a feature that can be exploited for brute force attacks and DDoS attacks. If you don't use remote publishing or pingbacks, it's safe to disable this. <br/><br/>
-								<a href="https://yourwebsite.com/disable-xml-rpc" class="tooltip-cta" target="_blank">Find out</a> why disabling XML-RPC can improve your site's security.
+								Disables XML-RPC, a feature that can be exploited for brute force attacks and DDoS attacks. If you don't use remote publishing or pingbacks, it's safe to disable this. <br/>
 								</span>
 							</button>
 						</label>
@@ -192,10 +190,9 @@ class SecuritySettingsPage {
 						<label>
 							<input type="checkbox" name="security_settings-custom_login_error_message" value="1" <?php checked( $settings['custom_login_error_message'] ?? 0, 1 ); ?> />
 							<span>Anonymize Login Failure Message</span>
-							<button class="tooltip" aria-describedby="tooltip-3" data-cta-link="https://yourwebsite.com/anonymize-login-failures">?
+							<button class="tooltip" aria-describedby="tooltip-3">?
 								<span class="tooltip-content" id="tooltip-3">
-								Hides whether a username or password is incorrect during login attempts. This makes it harder for attackers to guess valid usernames. <br/><br/>
-									<a href="https://yourwebsite.com/anonymize-login-failures" class="tooltip-cta" target="_blank">Discover</a> how anonymizing login failures can protect your site.
+								Hides whether a username or password is incorrect during login attempts. This makes it harder for attackers to guess valid usernames. <br/>
 								</span>
 							</button>
 						</label>
@@ -205,10 +202,9 @@ class SecuritySettingsPage {
 						<label>
 							<input type="checkbox" name="security_settings-limit_login_attempts" value="1" <?php checked( $settings['limit_login_attempts'] ?? 0, 1 ); ?> />
 							<span>Limit Login Attempts</span>
-							<button class="tooltip" aria-describedby="tooltip-4" data-cta-link="https://yourwebsite.com/limit-login-attempts">?
+							<button class="tooltip" aria-describedby="tooltip-4">?
 								<span class="tooltip-content" id="tooltip-4">
-								Restricts the number of login attempts to prevent brute force attacks. After a set number of failed attempts, the user will be temporarily locked out. <br/><br/>
-									<a href="https://yourwebsite.com/limit-login-attempts" class="tooltip-cta" target="_blank">See how</a> limiting login attempts can stop brute force attacks.
+								Restricts the number of login attempts to prevent brute force attacks. After a set number of failed attempts, the user will be temporarily locked out. <br/>
 								</span>
 							</button>
 						</label>
@@ -220,10 +216,10 @@ class SecuritySettingsPage {
 						<label>
 							<input type="checkbox" name="security_settings-prevent_user_enum_via_template" value="1" <?php checked( $settings['prevent_user_enum_via_template'] ?? 0, 1 ); ?> />
 							<span>Prevent User Enumeration Via Author Template</span>
-							<button class="tooltip" aria-describedby="tooltip-6" data-cta-link="https://yourwebsite.com/prevent-author-enumeration">?
+							<button class="tooltip" aria-describedby="tooltip-6">?
 								<span class="tooltip-content" id="tooltip-6">
 								Stops attackers from finding usernames through author archive pages. This adds an extra layer of security to your site. <br/><br/>
-									<a href="https://yourwebsite.com/prevent-author-enumeration" class="tooltip-cta" target="_blank">Find out</a> how to secure your author pages on our website.
+                                <strong>Warning: </strong>This disables author archive pages, which may affect theme features or author-specific content.
 								</span>
 							</button>
 						</label>
@@ -233,10 +229,10 @@ class SecuritySettingsPage {
 						<label>
 							<input type="checkbox" name="security_settings-prevent_user_enum_via_query_param" value="1" <?php checked( $settings['prevent_user_enum_via_query_param'] ?? 0, 1 ); ?> />
 							<span>Prevent User Enumeration Via Query Parameter</span>
-							<button class="tooltip" aria-describedby="tooltip-5" data-cta-link="https://yourwebsite.com/prevent-user-enumeration">?
+							<button class="tooltip" aria-describedby="tooltip-5">?
 								<span class="tooltip-content" id="tooltip-5">
 								Prevents attackers from discovering usernames by blocking access to user lists. This makes it harder for them to target specific accounts. <br/><br/>
-									<a href="https://yourwebsite.com/prevent-user-enumeration" class="tooltip-cta" target="_blank">Learn more</a> about protecting your site from user enumeration.
+                                    <strong>Warning: </strong>This blocks <code>?author=</code> queries, which may interfere with plugins or features that use user IDs.
 								</span>
 							</button>
 						</label>
@@ -248,10 +244,10 @@ class SecuritySettingsPage {
 						<label>
 							<input type="checkbox" name="security_settings-boot_non_logged_users_from_rest" value="1" <?php checked( $settings['boot_non_logged_users_from_rest'] ?? 0, 1 ); ?> />
 							<span>Prevent Non-logged-in users from accessing REST API Endpoints</span>
-							<button class="tooltip" aria-describedby="tooltip-8" data-cta-link="https://yourwebsite.com/restrict-rest-api">?
+							<button class="tooltip" aria-describedby="tooltip-8">?
 								<span class="tooltip-content" id="tooltip-8">
 								Restricts access to the WordPress REST API for non-logged-in users. This prevents unauthorized access to sensitive data. <br/><br/>
-									<a href="https://yourwebsite.com/restrict-rest-api" class="tooltip-cta" target="_blank">Discover</a> how securing the REST API can protect your site.
+                                <strong>Warning: </strong>Blocking public REST API access may break features or plugins that rely on public endpoints.
 								</span>
 							</button>
 						</label>
@@ -261,10 +257,10 @@ class SecuritySettingsPage {
 						<label>
 							<input type="checkbox" name="security_settings-block_specific_endpoints" value="1" <?php checked( $settings['block_specific_endpoints'] ?? 0, 1 ); ?> />
 							<span>Remove 'Users' and 'Plugins' Endpoints for all Users</span>
-							<button class="tooltip" aria-describedby="tooltip-9" data-cta-link="https://yourwebsite.com/remove-rest-endpoints">?
+							<button class="tooltip" aria-describedby="tooltip-9">?
 								<span class="tooltip-content" id="tooltip-9">
 								Hides the 'Users' and 'Plugins' endpoints in the REST API. This prevents attackers from gathering information about your site's users and plugins. <br/><br/>
-									<a href="https://yourwebsite.com/remove-rest-endpoints" class="tooltip-cta" target="_blank">Learn more</a> about securing REST API endpoints on our website.
+                                <strong>Warning: </strong>Disabling these endpoints improves privacy but can impact functionality in themes or plugins that rely on them.
 								</span>
 							</button>
 						</label>
@@ -277,7 +273,7 @@ class SecuritySettingsPage {
 		</div>
 		<div class="promotion">
 			<h3>Not sure what settings you need?</h3>
-			<p>Use our <a href="https://github.com/orgs/1PatchSecurity/dashboard" target="_blank">security testing tool</a> to find out where your site is vulnerable.</p>
+			<p>Use our <a href="https://github.com/OnePatchSecurity/OnePatchPenTestingTool" target="_blank">security testing tool</a> to find out where your site is vulnerable.</p>
 		</div>
 		<?php
 	}
