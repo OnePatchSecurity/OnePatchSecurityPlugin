@@ -204,7 +204,7 @@ class SecuritySettingsPage {
 							<span>Limit Login Attempts</span>
 							<button class="tooltip" aria-describedby="tooltip-4">?
 								<span class="tooltip-content" id="tooltip-4">
-								Restricts the number of login attempts to prevent brute force attacks. After a set number of failed attempts, the user will be temporarily locked out. <br/>
+								Restricts the number of login attempts to prevent brute force attacks. After three failed attempts, the user will be temporarily locked out. <br/>
 								</span>
 							</button>
 						</label>
