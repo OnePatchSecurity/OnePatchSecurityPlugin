@@ -250,6 +250,7 @@ class OnePatch {
 			return new WP_Error(
 				'too_many_attempts',
 				sprintf(
+					/* translators: %d: Number of minutes until the user can try logging in again */
 					__( 'Too many failed login attempts. Please try again in %d minutes.', 'one-patch-security' ),
 					ceil( ( $lockout_expires - time() ) / 60 )
 				)
@@ -275,6 +276,7 @@ class OnePatch {
 			return new WP_Error(
 				'too_many_attempts',
 				sprintf(
+					/* translators: Too many failed login attempts. Please try again in %d minutes. */
 					__( 'Too many failed login attempts. Please try again in %d minutes.', 'one-patch-security' ),
 					ceil( $lockout_duration / 60 )
 				)
