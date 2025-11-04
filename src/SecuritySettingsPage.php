@@ -83,8 +83,35 @@ class SecuritySettingsPage {
 	 * @return void
 	 */
 	public function register_settings(): void {
-		register_setting( 'security_settings_group', 'security_settings' );
+		register_setting(
+                'security_settings_group',
+                'security_settings',
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => 'sanitize_security_settings_array',
+				'default'           => array(),
+			)
+        );
 	}
+
+	/**
+	 * Sanitize security settings array - convert all values to booleans
+	 *
+	 * @param array $input The unsanitized input array.
+	 * @return array The sanitized array with boolean values.
+	 */
+	 public function sanitize_security_settings_array( array $input ): array {
+		$sanitized = array();
+
+		foreach ( $input as $key => $value ) {
+			// Sanitize the key and ensure the value is boolean
+			$sanitized_key = sanitize_key( $key );
+			$sanitized[ $sanitized_key ] = (bool) $value;
+		}
+
+		return $sanitized;
+	}
+
 
 	/**
 	 * Enqueue the assets for the security settings page.
