@@ -1,13 +1,13 @@
 === One Patch Security ===
 Contributors: Mike Kelley, One Patch Security
-Tags: security, wordpress security, lightweight, configurable, secure cookies, disable xml-rpc, prevent user enumeration, restrict rest api, login security
+Tags: security, wordpress security, lightweight, configurable, lightweight security
 Requires at least: 5.6
-Tested up to: 6.3
+Tested up to: 6.8
 Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-One Patch Security is a lightweight, configurable WordPress plugin designed to patch security vulnerabilities in the WordPress core application. It provides essential security features that can be toggled on or off, allowing you to customize the plugin to your site's needs.
+Lightweight, configurable plugin that patches WordPress core vulnerabilities and lets you toggle essential security features.
 
 == Description ==
 
