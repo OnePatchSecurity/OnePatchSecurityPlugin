@@ -119,7 +119,7 @@ class OnePatch {
 		}
 
 		foreach ( $errors->errors as $code => $messages ) {
-			$errors->errors[ $code ] = array( __( 'Invalid login credentials. Please try again.', 'textdomain' ) );
+			$errors->errors[ $code ] = array( __( 'Invalid login credentials. Please try again.', 'one-patch-security' ) );
 		}
 
 		return $errors;
@@ -250,7 +250,7 @@ class OnePatch {
 			return new WP_Error(
 				'too_many_attempts',
 				sprintf(
-					__( 'Too many failed login attempts. Please try again in %d minutes.', 'your-text-domain' ),
+					__( 'Too many failed login attempts. Please try again in %d minutes.', 'one-patch-security' ),
 					ceil( ( $lockout_expires - time() ) / 60 )
 				)
 			);
@@ -275,7 +275,7 @@ class OnePatch {
 			return new WP_Error(
 				'too_many_attempts',
 				sprintf(
-					__( 'Too many failed login attempts. Please try again in %d minutes.', 'your-text-domain' ),
+					__( 'Too many failed login attempts. Please try again in %d minutes.', 'one-patch-security' ),
 					ceil( $lockout_duration / 60 )
 				)
 			);
@@ -372,7 +372,7 @@ class OnePatch {
 				esc_js(
 					sprintf(
 					// Translators: %d is the number of minutes the user must wait before trying to log in again.
-						__( 'Too many failed login attempts. Please try again in %d minutes.', 'your-text-domain' ),
+						__( 'Too many failed login attempts. Please try again in %d minutes.', 'one-patch-security' ),
 						$minutes_remaining
 					)
 				)

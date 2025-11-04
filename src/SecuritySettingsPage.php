@@ -125,7 +125,7 @@ class SecuritySettingsPage {
 		if ( isset( $_POST['submit'] ) ) {
 			if ( ! isset( $_POST['security_settings_nonce'] ) ||
 				! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['security_settings_nonce'] ) ), 'security_settings_nonce' ) ) {
-				wp_die( esc_html__( 'Security check failed.', 'your-text-domain' ) );
+				wp_die( esc_html__( 'Security check failed.', 'one-patch-security' ) );
 			}
 
 			$settings = array(
