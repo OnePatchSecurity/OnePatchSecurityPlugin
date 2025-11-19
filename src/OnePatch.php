@@ -51,18 +51,19 @@ class OnePatch {
 	 */
 	public function __construct() {
 		$this->settings = get_option( 'security_settings', array() );
-		add_action( 'init', array( $this, 'remove_wp_version_meta' ) ); // tested and implemented in the settings page.
-		add_filter( 'init', array( $this, 'disable_xmlrpc' ), PHP_INT_MAX ); // tested and implemented in the settings page.
-		add_filter( 'wp_login_errors', array( $this, 'custom_login_error_message' ) ); // tested and implemented in the settings page.
+		add_action( 'init', array( $this, 'remove_wp_version_meta' ) );
+		add_filter( 'init', array( $this, 'disable_xmlrpc' ), PHP_INT_MAX );
+		add_filter( 'wp_login_errors', array( $this, 'custom_login_error_message' ) );
 
-		add_action( 'init', array( $this, 'prevent_user_enum_via_query_param' ) ); // tested and implemented in the settings page.
-		add_action( 'template_redirect', array( $this, 'prevent_user_enum_via_template' ) ); // tested and implemented in the settings page.
+		add_action( 'init', array( $this, 'prevent_user_enum_via_query_param' ) );
+		add_action( 'template_redirect', array( $this, 'prevent_user_enum_via_template' ) );
 
-		add_filter( 'rest_authentication_errors', array( $this, 'boot_non_logged_users_from_rest' ) ); // tested and implemented in the settings page.
-		add_filter( 'rest_endpoints', array( $this, 'block_specific_endpoints' ) ); // tested and implemented in the settings page.
+		add_filter( 'rest_authentication_errors', array( $this, 'boot_non_logged_users_from_rest' ) );
+		add_filter( 'rest_endpoints', array( $this, 'block_specific_endpoints' ) );
 
-		add_filter( 'authenticate', array( $this, 'handle_login_attempts_and_lockout' ), 30, 3 ); // tested and implemented in the settings page.
-		add_action( 'login_enqueue_scripts', array( $this, 'hide_login_box_if_locked_out' ) ); // tested and implemented in the settings page.
+		add_filter( 'authenticate', array( $this, 'handle_login_attempts_and_lockout' ), 30, 3 );
+		add_action( 'login_form', array( $this, 'add_login_nonce' ) );
+		add_action( 'login_enqueue_scripts', array( $this, 'hide_login_box_if_locked_out' ) );
 	}
 
 	/**
@@ -289,8 +290,8 @@ class OnePatch {
 	/**
 	 * Get safe transient.
 	 *
-	 * @param string $key
-	 * @return int
+	 * @param string $key transient key.
+	 * @return int the transient value.
 	 */
 	private function get_safe_transient( string $key ): int {
 		$value = get_transient( $key );
@@ -298,11 +299,12 @@ class OnePatch {
 	}
 
 	/**
-	 * Adds JavaScript to hide the login box if the user is locked out.
+	 * Helper function to set a secure cookie
 	 *
-	 * @param string $name
-	 * @param string $value
-	 * @param int    $expires
+	 * @param string $name Cookie name.
+	 * @param string $value Cookie value.
+	 * @param int    $expires Cookie expiry.
+	 *
 	 * @return void
 	 *
 	 * @since 1.0.0
@@ -325,22 +327,44 @@ class OnePatch {
 	/**
 	 * Helper function to clear the cookie.
 	 *
-	 * @param string $name
+	 * @param string $name Cookie name.
+	 *
 	 * @return void
+	 *
+	 * @since 1.0.0
 	 */
 	private function clear_cookie( string $name ): void {
 		$this->set_secure_cookie( $name, '', time() - YEAR_IN_SECONDS );
 	}
 
 	/**
-	 * Adds JavaScript to hide the login box if the user is locked out.
+	 * Add a nonce to the login form.
+	 *
+	 * @return void
+	 *
+	 * @since 1.0.0
+	 */
+	public function add_login_nonce(): void {
+		wp_nonce_field( 'one_patch_security_login', '_ops_nonce' );
+	}
+
+	/**
+	 * Add JavaScript to hide logout box if user is logged out.
+	 *
+	 * @return void
+	 *
+	 * @since 1.0.0
 	 */
 	public function hide_login_box_if_locked_out(): void {
 		if ( empty( $this->settings['limit_login_attempts'] ) ) {
 			return;
 		}
 
-		if ( ! isset( $_POST['log'] ) ) {
+		if ( ! isset( $_POST['log'], $_POST['_ops_nonce'] ) ) {
+			return;
+		}
+
+		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_ops_nonce'] ) ), 'one_patch_security_login' ) ) {
 			return;
 		}
 

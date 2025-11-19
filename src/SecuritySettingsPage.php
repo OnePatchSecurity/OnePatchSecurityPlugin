@@ -84,14 +84,14 @@ class SecuritySettingsPage {
 	 */
 	public function register_settings(): void {
 		register_setting(
-                'security_settings_group',
-                'security_settings',
+			'security_settings_group',
+			'security_settings',
 			array(
 				'type'              => 'array',
-				'sanitize_callback' => 'sanitize_security_settings_array',
+				'sanitize_callback' => array( $this, 'sanitize_security_settings_array' ),
 				'default'           => array(),
 			)
-        );
+		);
 	}
 
 	/**
@@ -100,12 +100,12 @@ class SecuritySettingsPage {
 	 * @param array $input The unsanitized input array.
 	 * @return array The sanitized array with boolean values.
 	 */
-	 public function sanitize_security_settings_array( array $input ): array {
+	public function sanitize_security_settings_array( array $input ): array {
 		$sanitized = array();
 
 		foreach ( $input as $key => $value ) {
-			// Sanitize the key and ensure the value is boolean
-			$sanitized_key = sanitize_key( $key );
+			// Sanitize the key and ensure the value is boolean.
+			$sanitized_key               = sanitize_key( $key );
 			$sanitized[ $sanitized_key ] = (bool) $value;
 		}
 
@@ -246,7 +246,7 @@ class SecuritySettingsPage {
 							<button class="tooltip" aria-describedby="tooltip-6">?
 								<span class="tooltip-content" id="tooltip-6">
 								Stops attackers from finding usernames through author archive pages. This adds an extra layer of security to your site. <br/><br/>
-                                <strong>Warning: </strong>This disables author archive pages, which may affect theme features or author-specific content.
+								<strong>Warning: </strong>This disables author archive pages, which may affect theme features or author-specific content.
 								</span>
 							</button>
 						</label>
@@ -259,7 +259,7 @@ class SecuritySettingsPage {
 							<button class="tooltip" aria-describedby="tooltip-5">?
 								<span class="tooltip-content" id="tooltip-5">
 								Prevents attackers from discovering usernames by blocking access to user lists. This makes it harder for them to target specific accounts. <br/><br/>
-                                    <strong>Warning: </strong>This blocks <code>?author=</code> queries, which may interfere with plugins or features that use user IDs.
+									<strong>Warning: </strong>This blocks <code>?author=</code> queries, which may interfere with plugins or features that use user IDs.
 								</span>
 							</button>
 						</label>
@@ -274,7 +274,7 @@ class SecuritySettingsPage {
 							<button class="tooltip" aria-describedby="tooltip-8">?
 								<span class="tooltip-content" id="tooltip-8">
 								Restricts access to the WordPress REST API for non-logged-in users. This prevents unauthorized access to sensitive data. <br/><br/>
-                                <strong>Warning: </strong>Blocking public REST API access may break features or plugins that rely on public endpoints.
+								<strong>Warning: </strong>Blocking public REST API access may break features or plugins that rely on public endpoints.
 								</span>
 							</button>
 						</label>
@@ -287,7 +287,7 @@ class SecuritySettingsPage {
 							<button class="tooltip" aria-describedby="tooltip-9">?
 								<span class="tooltip-content" id="tooltip-9">
 								Hides the 'Users' and 'Plugins' endpoints in the REST API. This prevents attackers from gathering information about your site's users and plugins. <br/><br/>
-                                <strong>Warning: </strong>Disabling these endpoints improves privacy but can impact functionality in themes or plugins that rely on them.
+								<strong>Warning: </strong>Disabling these endpoints improves privacy but can impact functionality in themes or plugins that rely on them.
 								</span>
 							</button>
 						</label>
