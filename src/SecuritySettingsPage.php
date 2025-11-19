@@ -298,10 +298,6 @@ class SecuritySettingsPage {
 				<?php submit_button(); ?>
 			</form>
 		</div>
-		<div class="promotion">
-			<h3>Not sure what settings you need?</h3>
-			<p>Use our <a href="https://github.com/OnePatchSecurity/OnePatchPenTestingTool" target="_blank">security testing tool</a> to find out where your site is vulnerable.</p>
-		</div>
 		<?php
 	}
 }
