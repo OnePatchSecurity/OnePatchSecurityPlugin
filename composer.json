@@ -9,6 +9,11 @@
       "email": "support@1patchsecurity.com"
     }
   ],
+  "scripts": {
+    "dev": "webpack --watch",
+    "build": "webpack --mode production",
+    "build-zip": "npm run build && node build-zip.js"
+  },
   "require": {
     "php": ">=8.2"
   },
